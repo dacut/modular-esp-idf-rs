@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "crates/*",
+]
+
+[patch.crates-io]
+kconfig-represent = { path = "../kconfig-represent" }
+kconfig-parser = { path = "../kconfig-parser" }
+
+[workspace.package]
+authors = ["David Cuthbert <dacut@kanga.org>"]
+edition = "2021"
+homepage = "https://github.com/dacut/modular-esp-idf-rs"
+license = "Apache-2.0"
+repository = "https://github.com/dacut/modular-esp-idf-rs.git"
+version = "0.1.0"
