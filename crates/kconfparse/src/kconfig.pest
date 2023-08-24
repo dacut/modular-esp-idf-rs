@@ -1,0 +1,112 @@
+//! KConfig complete grammar
+file = { (top_level | empty_line)* }
+
+top_level = {
+    source_directive
+}
+
+source_directive = { source_token ~ string ~ NEWLINE }
+source_token = { K_SOURCE | K_RSOURCE | K_OSOURCE | K_ORSOURCE }
+empty_line = _{ NEWLINE }
+
+config_directive = { K_CONFIG ~ ident ~ NEWLINE ~ (property | empty_line)* }
+menuconfig_directive = { K_MENUCONFIG ~ ident ~ NEWLINE ~ (property | empty_line)* }
+
+property = {
+    type_property | depends_property | help_property | select_property | default_property | def_type_property |
+    prompt_property | range_property | imply_property | visible_property | option_property | optional_property
+}
+
+type_property = { type_token ~ prompt? ~ NEWLINE }
+depends_property = { K_DEPENDS ~ K_ON ~ expr ~ NEWLINE }
+help_property = { K_HELP ~ NEWLINE ~ empty_line* ~ help_text }
+select_property = { K_SELECT ~ nonconst_ident ~ cond? ~ NEWLINE }
+default_property = { K_DEFAULT ~ expr ~ cond? ~ NEWLINE }
+def_type_property = { def_type ~ expr ~ cond? ~ NEWLINE }
+prompt_property = { K_PROMPT ~ prompt ~ NEWLINE }
+range_property = { K_RANGE ~ ident ~ ident ~ cond? ~ NEWLINE }
+imply_property = { K_IMPLY ~ nonconst_ident ~ cond? ~ NEWLINE }
+visible_property = { K_VISIBLE ~ K_IF ~ expr ~ NEWLINE }
+option_property = {
+    K_OPTION ~ K_ENV ~ "=" ~ string ~ NEWLINE | // FIXME: string = _expect_str
+    K_OPTION ~ K_DEFCONFIGLIST ~ NEWLINE |
+    K_OPTION ~ K_MODULES ~ NEWLINE |
+    K_OPTION ~ K_ALLNOCONFIGY ~ NEWLINE
+}
+optional_property = { K_OPTIONAL ~ NEWLINE }
+
+prompt = { string ~ cond }
+
+help_text = @{
+    PUSH(WHITESPACE+) ~ (!(NEWLINE) ~ ANY)* ~ NEWLINE ~
+    ( ( PEEK ~ (!(NEWLINE) ~ ANY)* )? ~ NEWLINE )* ~
+    DROP
+}
+
+expr = { prefix? ~ primary ~ ( infix ~ prefix? ~ primary )? }
+primary = { ident | "(" ~ expr ~ ")" }
+infix = { "&&" | "||" | "=" | "!=" | "<" | "<=" | ">" | ">=" }
+prefix = { "!" }
+cond = { K_IF ~ expr }
+
+ident = { XID_START ~ XID_CONTINUE* }
+nonconst_ident = {
+    XID_START ~ XID_CONTINUE+ |
+    !("n" | "m" | "y") ~ XID_START
+}
+
+string = { "\"" ~ (raw_string)* ~ "\"" }
+raw_string = _{ (!("\\" | "\"" | "\n") ~ ANY)+ }
+string_escape = _{ "\\" ~ (predefined_escape | byte_escape | unicode_escape) }
+predefined_escape = _{ "n" | "r" | "t" | "\\" | "0" | "\"" | "'" }
+byte_escape = _{ "x" ~ hex{2} }
+hex = _{ '0'..'9' | 'a'..'f' | 'A'..'F' }
+unicode_escape = _{ "u" ~ "{" ~ unicode_hex ~ "}" }
+unicode_hex = _{ hex{1, 6} }
+
+def_type = _{ K_DEF_BOOL | K_DEF_HEX | K_DEF_INT | K_DEF_STRING | K_DEF_TRISTATE }
+type_token = _{ K_BOOL | K_TRISTATE | K_INT | K_HEX | K_STRING }
+
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ "#" ~ (!"\n" ~ ANY)* }
+
+K_ALLNOCONFIGY = { "allnoconfig_y" }
+K_BOOL = { "bool" }
+K_BOOLEAN = { "boolean" }
+K_CHOICE = { "choice" }
+K_COMMENT = { "comment" }
+K_CONFIG = { "config" }
+K_DEF_BOOL = { "def_bool" }
+K_DEF_HEX = { "def_hex" }
+K_DEF_INT = { "def_int" }
+K_DEF_STRING = { "def_string" }
+K_DEF_TRISTATE = { "def_tristate" }
+K_DEFAULT = { "default" }
+K_DEFCONFIGLIST = { "defconfig_list" }
+K_DEPENDS = { "depends" }
+K_ENDCHOICE = { "endchoice" }
+K_ENDIF = { "endif" }
+K_ENDMENU = { "endmenu" }
+K_ENV = { "env" }
+K_HELP = { "help" | "---help---" }
+K_HEX = { "hex" }
+K_IF = { "if" }
+K_IMPLY = { "imply" }
+K_INT = { "int" }
+K_MAINMENU = { "mainmenu" }
+K_MENU = { "menu" }
+K_MENUCONFIG = { "menuconfig" }
+K_MODULES = { "modules" }
+K_ON = { "on" }
+K_OPTION = { "option" }
+K_OPTIONAL = { "optional" }
+K_ORSOURCE = { "orsource" | "grsource" }
+K_OSOURCE = { "osource" | "gsource" }
+K_PROMPT = { "prompt" }
+K_RANGE = { "range" }
+K_RSOURCE = { "rsource" }
+K_SELECT = { "select" }
+K_SOURCE = { "source" }
+K_STRING = { "string" }
+K_TRISTATE = { "tristate" }
+K_VISIBLE = { "visible" }

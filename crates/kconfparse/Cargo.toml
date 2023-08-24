@@ -1,0 +1,15 @@
+[package]
+name = "modular-esp-idf-kconfparse"
+description = "Parse Kconfig files"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[features]
+
+[dependencies]
+pest = "2.7.2"
+pest_derive = "2.7.2"
